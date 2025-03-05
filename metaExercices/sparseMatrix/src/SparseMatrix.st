@@ -1,40 +1,29 @@
-Object subclass: #SparseMatrix
-    instanceVariableNames: 'triplets rows cols'
+Matrix subclass: #SparseMatrix
+    instanceVariableNames: 'triplets'
     classVariableNames: ''
     poolDictionaries: ''
     category: 'SparseMatrixExample'.
 
 SparseMatrix >> initializeWithTriplets: aTriplets rows: r cols: c [
+    super initializeRows: r cols: c.
     triplets := aTriplets.
-    rows := r.
-    cols := c.
-    ^ self.
 ]
 
-SparseMatrix class >> fromDense: aMatrix [
-    | sparseTriplets |
-    sparseTriplets := OrderedCollection new.
-    
-    aMatrix withIndexDo: [ :row :i |
-        row withIndexDo: [ :value :j |  
-            value ~= 0 ifTrue: [ sparseTriplets add: { i. j. value } ].
-        ].
-    ].
-    
-    ^ self new initializeWithTriplets: sparseTriplets rows: aMatrix size cols: aMatrix first size.
-]
-
-SparseMatrix class >> toDense: triplets rows: n cols: m [
-    | denseMatrix |
-    denseMatrix := Array new: n withAll: [ Array new: m withAll: 0 ].
-    
-    triplets do: [ :t |
-        (denseMatrix at: t first) at: t second put: t third.
-    ].
-    
-    ^ denseMatrix.
+SparseMatrix >> atRow: i col: j [
+    | found |
+    found := triplets detect: [ :t | (t first = i) and: (t second = j) ] ifNone: [ nil ].
+    ^ found isNil ifTrue: [ 0 ] ifFalse: [ found third ].
 ]
 
 SparseMatrix >> asDense [
-    ^ SparseMatrix toDense: triplets rows: rows cols: cols.
+    | dense |
+    dense := DenseMatrix new initializeRows: rows cols: cols.
+    triplets do: [ :t |
+        dense atRow: t first col: t second put: t third.
+    ].
+    ^ dense.
+]
+
+SparseMatrix class >> fromTriplets: aTriplets rows: r cols: c [
+    ^ self new initializeWithTriplets: aTriplets rows: r cols: c.
 ]
